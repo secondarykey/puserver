@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>PlantUML Server</title>
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue_grey-indigo.min.css" />
+    <style>
+    div.content {
+      overflow:hidden;
+    }
+    #content-zoom {
+      width:100%;
+      height:20px;
+      cursor:pointer;
+    }
+    #contentImage {
+      padding:5px;
+      position:absolute;
+      cursor:grab;
+      border:1px solid #dddddd;
+      border-radius:2px;
+      z-index:0;
+    }
+
+    #reload-card {
+      position:absolute;
+      width:40%;
+      background-color:#fafafa;
+      max-height:50px !important;
+      min-height:50px !important;
+      opacity:0.5px;
+      right:5px;
+      bottom:5px;
+      z-index:2;
+    }
+
+    #close-btn {
+      position:absolute;
+      min-width:40px;
+      right:6px;
+      top:6px;
+      padding:0px;
+      width:40px;
+    }
+
+    #reload-btn {
+      position:absolute;
+      right:5px;
+      bottom:5px;
+      z-index:1;
+    }
+
+    div.plantuml-frame {
+      height:95%;
+      margin-bottom:50px;
+      overflow:hidden;
+      background-color:white;
+    }
+    #markdown-frame {
+      background-color:white;
+      z-index:100;
+    }
+    textarea.markdown {
+      width:100%;
+      height:100%;
+      border:1px solid #999999;
+    }
+    footer {
+      height:25px;
+      padding:5px !important;
+    }
+    footer.copyright {
+      position:fixed;
+      right:5px;
+    }
+    </style>
+</head>
+<body>
+
+  <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+
+    <div class="header mdl-layout__header mdl-layout__header--waterfall">
+      <div class="mdl-layout__header-row">
+        <span class="title mdl-layout-title">
+        PlantUML Server
+        </span>
+        <div class="header-spacer mdl-layout-spacer"></div>
+
+        <div class="navigation-container">
+          <nav class="navigation mdl-navigation">
+          <!--
+            <a class="mdl-navigation__link mdl-typography--text-uppercase" href="">Phones</a>
+            -->
+          </nav>
+        </div>
+<!--
+        <button class="android-more-button mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" id="more-button">
+          <i class="material-icons">more_vert</i>
+        </button>
+        <ul class="mdl-menu mdl-js-menu mdl-menu--bottom-right mdl-js-ripple-effect" for="more-button">
+          <li class="mdl-menu__item">5.0 Lollipop</li>
+        </ul>
+-->
+      </div>
+    </div>
+
+    <div class="drawer mdl-layout__drawer">
+      <span class="mdl-layout-title">
+      <!--
+        <img class="android-logo-image" src="images/android-logo-white.png">
+        -->
+      </span>
+
+        <nav class="mdl-navigation">
+        <!--
+          <a class="mdl-navigation__link" href="">Phones</a>
+          <div class="android-drawer-separator"></div>
+          -->
+        </nav>
+      </div>
+
+      <div class="content mdl-layout__content">
+        <a name="top"></a>
+
+
+        <div class="plantuml-frame mdl-grid">
+          <div id="markdown-frame" class="mdl-cell mdl-cell--6-col">
+            <textarea id="markdown" class="markdown mdl-textfield__input">Bob -> Bill</textarea>
+          </div>
+          <div class="mdl-cell mdl-cell--6-col">
+            <div id="content-zoom" class="mdl-progress mdl-js-progress"></div>
+            <img id="contentImage" draggable="true">
+
+            <div id="reload-card" class="mdl-card mdl-shadow--2dp">
+              <button id="close-btn" class="mdl-button mdl-js-button mdl-button--raised" type="button">
+                <span class="material-icons">close</span >
+              </button>
+            </div>
+
+            <button id="reload-btn" class="mdl-button mdl-js-button mdl-button--raised" type="button">
+              <span class="material-icons">update</span >
+            </button>
+
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="footer mdl-mini-footer">
+
+        <p class="copyright mdl-typography--font-light">&copy;2022 PlantUML wrapper</p>
+
+      </footer>
+      </div>
+    </div>
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script>
+
+      var buffer = "";
+      var loadBinaryImage = function(url, callback) {
+
+        var txtElm = document.getElementById('markdown');
+        var txt = txtElm.value;
+        if ( buffer == txt ) {
+          return;
+        }
+
+        buffer = txt;
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            callback(this.response);
+          }
+        }
+
+        xhr.open('POST', url);
+        xhr.responseType = 'blob';
+
+        var params = {};
+        params.text = txt;
+
+        var json = JSON.stringify(params);
+        xhr.send(json);
+      }
+
+      var zoom = document.querySelector('#content-zoom');
+      function setProgressText(txt) {
+        var elm = zoom.querySelector("div:first-child");
+        elm.textContent = txt;
+        elm.style.color = "White";
+        elm.style.textAlign = "center";
+      }
+
+      zoom.addEventListener('mdl-componentupgraded', function() {
+        //100%として設定
+        this.MaterialProgress.setProgress(100);
+        setProgressText("100%");
+      });
+
+      var img = document.getElementById('contentImage');
+
+      zoom.addEventListener('click', function(e) {
+
+        var elm = e.target;
+        var val = e.offsetX;
+        var w100 = zoom.clientWidth;
+        var v = Math.floor(val / w100 * 100);
+
+        this.MaterialProgress.setProgress(v);
+        setProgressText(v + "%");
+
+        var div = v / 100;
+        img.style.width = Math.floor(img.naturalWidth * div) + "px"; 
+      });
+
+      function draggable(target) {
+
+        var x;
+        var y;
+
+        function up() {
+          document.body.removeEventListener("mousemove", move, false);
+          target.removeEventListener("mouseup", move, false);
+          target.style.cursor = "grab";
+        }
+
+        function move(e) {
+
+          e.preventDefault();
+
+          target.style.top = e.pageY - y + "px";
+          target.style.left = e.pageX - x + "px";
+
+          //マウスボタンが離されたとき、またはカーソルが外れたとき発火
+          target.addEventListener("mouseup", up, false);
+          document.body.addEventListener("mouseleave", up, false);
+        }
+
+        target.addEventListener("mousedown", function(e) {
+          target.style.cursor = "grabbing";
+          x = e.pageX - this.offsetLeft;
+          y = e.pageY - this.offsetTop;
+          //ムーブイベントにコールバック
+          document.body.addEventListener("mousemove", move, false);
+          document.body.addEventListener("touchmove", move, false);
+        }, false);
+
+      }
+
+      draggable(img);
+
+      var reloadBtn = document.querySelector('#reload-btn');
+      reloadBtn.addEventListener('click', function() {
+
+      });
+
+      var setImage = function() {
+        loadBinaryImage('/convert/image', function (blob) {
+          img.src = URL.createObjectURL(blob);
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        setImage();
+      });
+
+      var dur = 30;
+      setInterval(setImage, dur * 1000);
+
+  </script> 
+</body>
+</html>
