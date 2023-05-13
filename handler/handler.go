@@ -13,7 +13,7 @@ import (
 
 func Register() error {
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/convert/image", convertImageHandler)
+	http.HandleFunc("/api/image/generate", generateImageHandler)
 	return nil
 }
 
@@ -28,11 +28,11 @@ type ImageRequest struct {
 	Text string `json:"text"`
 }
 
-func convertImageHandler(w http.ResponseWriter, r *http.Request) {
+func generateImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err)
+		logic.WriteErrorImage(w, err)
 		return
 	}
 
@@ -40,15 +40,15 @@ func convertImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &req)
 	if err != nil {
-		log.Println(err)
+		logic.WriteErrorImage(w, err)
 		return
 	}
 
+	//元データを設定
 	buf := strings.NewReader(req.Text)
-
 	err = logic.WriteImage(w, buf)
 	if err != nil {
-		log.Println(err)
+		logic.WriteErrorImage(w, err)
 		return
 	}
 

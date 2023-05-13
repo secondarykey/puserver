@@ -125,7 +125,8 @@
 
         <div class="plantuml-frame mdl-grid">
           <div id="markdown-frame" class="mdl-cell mdl-cell--6-col">
-            <textarea id="markdown" class="markdown mdl-textfield__input">Bob -> Bill</textarea>
+            <textarea id="markdown" class="markdown mdl-textfield__input">Bob -> Bill
+Bill --> Bob</textarea>
           </div>
           <div class="mdl-cell mdl-cell--6-col">
             <div id="content-zoom" class="mdl-progress mdl-js-progress"></div>
@@ -255,7 +256,7 @@
       });
 
       var setImage = function() {
-        loadBinaryImage('/convert/image', function (blob) {
+        loadBinaryImage('/api/image/generate', function (blob) {
           img.src = URL.createObjectURL(blob);
         });
       }
